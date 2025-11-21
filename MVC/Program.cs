@@ -17,6 +17,32 @@ builder.Services.AddScoped<IService<UserRequest, UserResponse>, UserService>();
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<Db>();
+
+    // Eðer veritabaný yoksa oluþtur
+    db.Database.EnsureCreated();
+
+    // Buraya istediðin roller:
+    var requiredRoles = new[] { "Admin", "User", "Main Admin" };
+
+    var existingNames = db.Roles
+        .Select(r => r.Name)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    var toAdd = requiredRoles
+        .Where(name => !existingNames.Contains(name))
+        .Select(name => new Role { Name = name })
+        .ToList();
+
+    if (toAdd.Count > 0)
+    {
+        db.Roles.AddRange(toAdd);
+        db.SaveChanges();
+    }
+}
+
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

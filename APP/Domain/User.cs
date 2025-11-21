@@ -1,6 +1,10 @@
 ﻿using CORE.APP.Domain;
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+    
 
 namespace APP.Domain
 {
@@ -40,5 +44,18 @@ namespace APP.Domain
 
         [StringLength(500)]
         public string? Address { get; set; }
+
+        // Bir kullanıcının birden fazla rolü olabilir
+        public List<UserRole> UserRoles { get; set; } = new List<UserRole>();
+
+        // Formlardan sadece rol id'leri ile çalışmak için helper property
+        [NotMapped]
+        public List<int> RoleIds
+        {
+            get => UserRoles.Select(ur => ur.RoleId).ToList();
+            set => UserRoles = value?.Select(roleId => new UserRole { RoleId = roleId }).ToList()
+                              ?? new List<UserRole>();
+        }
+
     }
 }

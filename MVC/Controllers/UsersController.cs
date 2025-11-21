@@ -1,23 +1,32 @@
 ﻿#nullable disable
+using APP.Domain;   // Db ve Role için
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using CORE.APP.Services;
 using APP.Models;
+
 
 namespace MVC.Controllers
 {
     public class UsersController : Controller
     {
         private readonly IService<UserRequest, UserResponse> _userService;
+        private readonly Db _db;   // EKLEDİK
 
-        public UsersController(IService<UserRequest, UserResponse> userService)
+        public UsersController(IService<UserRequest, UserResponse> userService, Db db)
         {
             _userService = userService;
+            _db = db; // EKLEDİK
         }
 
         private void SetViewData()
         {
+            // Tüm rolleri isimlerine göre sırala ve view'a gönder
+            ViewBag.Roles = _db.Roles
+                               .OrderBy(r => r.Name)
+                               .ToList();
         }
+
 
         private void SetTempData(string message, string key = "Message")
         {

@@ -3,6 +3,8 @@ using APP.Domain;
 using CORE.APP.Models;
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
+
 
 namespace APP.Models
 {
@@ -47,5 +49,9 @@ namespace APP.Models
         [StringLength(500)]
         [Display(Name = "Address")]
         public string? Address { get; set; }
+
+        [Display(Name = "Roles")]
+        public List<int> RoleIds { get; set; } = new List<int>();
+
     }
 }

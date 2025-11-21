@@ -38,6 +38,9 @@ namespace APP.Models
         [Display(Name = "Is Active?")]
         public bool IsActive { get; set; }
 
+        [Display(Name = "Roles")]
+        public string Roles { get; set; }
+
         [Display(Name = "Address")]
         public string? Address { get; set; }
     }

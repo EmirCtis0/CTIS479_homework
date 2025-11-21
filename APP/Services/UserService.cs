@@ -17,25 +17,39 @@ namespace APP.Services
 
         public List<UserResponse> List()
         {
-            return Query().Select(entity => new UserResponse
-            {
-                Id = entity.Id,
-                Guid = entity.Guid,
-                Username = entity.Username,
-                FirstName = entity.FirstName,
-                LastName = entity.LastName,
-                Gender = entity.Gender,
-                BirthDate = entity.BirthDate,
-                RegistrationDate = entity.RegistrationDate,
-                Score = entity.Score,
-                IsActive = entity.IsActive,
-                Address = entity.Address
-            }).ToList();
+            // UserRoles ve Role'leri birlikte çekiyoruz
+            return Query()
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .OrderBy(entity => entity.Username)
+                .Select(entity => new UserResponse
+                {
+                    Id = entity.Id,
+                    Guid = entity.Guid,
+                    Username = entity.Username,
+                    FirstName = entity.FirstName,
+                    LastName = entity.LastName,
+                    Gender = entity.Gender,
+                    BirthDate = entity.BirthDate,
+                    RegistrationDate = entity.RegistrationDate,
+                    Score = entity.Score,
+                    IsActive = entity.IsActive,
+                    Address = entity.Address,
+
+                    // Roles kolonunda gösterilecek metin
+                    Roles = string.Join(", ",
+                        entity.UserRoles.Select(ur => ur.Role.Name))
+                })
+                .ToList();
         }
 
         public UserResponse Item(int id)
         {
-            var entity = Query().SingleOrDefault(c => c.Id == id);
+            var entity = Query()
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .SingleOrDefault(c => c.Id == id);
+
             if (entity is null)
                 return null;
 
@@ -51,13 +65,20 @@ namespace APP.Services
                 RegistrationDate = entity.RegistrationDate,
                 Score = entity.Score,
                 IsActive = entity.IsActive,
-                Address = entity.Address
+                Address = entity.Address,
+
+                // Details sayfasında görünecek metin
+                Roles = string.Join(", ",
+                    entity.UserRoles.Select(ur => ur.Role.Name))
             };
         }
 
         public UserRequest Edit(int id)
         {
-            var entity = Query().SingleOrDefault(c => c.Id == id);
+            var entity = Query()
+                .Include(u => u.UserRoles)
+                .SingleOrDefault(c => c.Id == id);
+
             if (entity is null)
                 return null;
 
@@ -70,7 +91,10 @@ namespace APP.Services
                 Gender = entity.Gender,
                 BirthDate = entity.BirthDate,
                 IsActive = entity.IsActive,
-                Address = entity.Address
+                Address = entity.Address,
+
+                // Mevcut roller Edit ekranındaki checkbox’larda işaretli gelsin
+                RoleIds = entity.RoleIds
             };
         }
 
@@ -90,7 +114,10 @@ namespace APP.Services
                 Address = request.Address?.Trim(),
                 Password = request.Password,
                 RegistrationDate = DateTime.Now,
-                Score = 0
+                Score = 0,
+
+                // Seçilen rolleri User entity'sine geç
+                RoleIds = request.RoleIds ?? new List<int>()
             };
 
             Create(entity);
@@ -103,7 +130,10 @@ namespace APP.Services
             if (Query().Any(c => c.Id != request.Id && c.Username == request.Username.Trim()))
                 return Error("A user with this username already exists.");
 
-            var entity = Query().SingleOrDefault(c => c.Id == request.Id);
+            var entity = Query()
+                .Include(u => u.UserRoles)
+                .SingleOrDefault(c => c.Id == request.Id);
+
             if (entity is null)
                 return Error("User not found!");
 
@@ -115,9 +145,11 @@ namespace APP.Services
             entity.IsActive = request.IsActive;
             entity.Address = request.Address?.Trim();
 
+            // Roller güncelleniyor
+            entity.RoleIds = request.RoleIds ?? new List<int>();
+
             if (!string.IsNullOrWhiteSpace(request.Password))
             {
-                
                 entity.Password = request.Password;
             }
 
